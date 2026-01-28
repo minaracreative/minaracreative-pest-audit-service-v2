@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pest Control Audit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .results.show {
+            display: block;
+        }
+        .results h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .result-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .result-value {
+            color: #333;
+            font-size: 14px;
+        }
+        .conclusion {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .conclusion-title {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .opportunity {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+        }
+        .opportunity-title {
+            color: #856404;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .error {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pre-Call Audit</h1>
+        <p class="subtitle">Generate audit instantly</p>
+
+        <div class="error" id="error"></div>
+
+        <form id="auditForm">
+            <div class="form-group">
+                <label for="businessName">Business Name *</label>
+                <input type="text" id="businessName" name="businessName" required placeholder="ABC Pest Control">
+            </div>
+
+            <div class="form-group">
+                <label for="website">Website URL *</label>
+                <input type="url" id="website" name="website" required placeholder="https://example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City *</label>
+                <input type="text" id="city" name="city" required placeholder="Austin">
+            </div>
+
+            <div class="form-group">
+                <label for="service">Primary Service *</label>
+                <select id="service" name="service" required>
+                    <option value="">Select a service</option>
+                    <option value="pest_control">Pest Control</option>
+                    <option value="termite_treatment">Termite Treatment</option>
+                    <option value="rodent_control">Rodent Control</option>
+                    <option value="mosquito_control">Mosquito Control</option>
+                    <option value="wildlife_removal">Wildlife Removal</option>
+                    <option value="general_pest_management">General Pest Management</option>
+                    <option value="fumigation">Fumigation</option>
+                    <option value="bed_bug_treatment">Bed Bug Treatment</option>
+                    <option value="ant_control">Ant Control</option>
+                    <option value="cockroach_control">Cockroach Control</option>
+                </select>
+            </div>
+
+            <button type="submit">Generate Audit</button>
+            <div class="loading" id="loading">Generating audit...</div>
+        </form>
+
+        <div class="results" id="results">
+            <h2>Audit Results</h2>
+
+            <div class="conclusion">
+                <div class="conclusion-title" id="conclusionTitle"></div>
+                <div id="conclusionReason"></div>
+            </div>
+
+            <div class="opportunity">
+                <div class="opportunity-title">Missed Opportunity</div>
+                <div id="opportunity"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Business</div>
+                <div class="result-value" id="resolvedName"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Rating</div>
+                <div class="result-value" id="rating"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Reviews</div>
+                <div class="result-value" id="reviews"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Local Visibility</div>
+                <div class="result-value" id="visibility"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Call Capture Risk</div>
+                <div class="result-value" id="captureRisk"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://minaracreative-pest-audit-service-v2.onrender.com/audit';
+
+        document.getElementById('auditForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const businessName = document.getElementById('businessName').value;
+            const website = document.getElementById('website').value;
+            const city = document.getElementById('city').value;
+            const service = document.getElementById('service').value;
+
+            const errorDiv = document.getElementById('error');
+            errorDiv.classList.remove('show');
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').classList.remove('show');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        business_name: businessName,
+                        website_url: website,
+                        city: city,
+                        primary_service: service
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate audit');
+                }
+
+                const data = await response.json();
+
+                document.getElementById('conclusionTitle').textContent = data.selected_conclusion.conclusion;
+                document.getElementById('conclusionReason').textContent = 'Reason: ' + data.selected_conclusion.reason;
+                document.getElementById('opportunity').textContent = data.missed_opportunity.opportunity_description;
+                document.getElementById('resolvedName').textContent = data.resolved_business.name;
+                document.getElementById('rating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + ' stars' : 'N/A';
+                document.getElementById('reviews').textContent = data.reviews.total_reviews || 'N/A';
+                document.getElementById('visibility').textContent = data.local_visibility.maps_visible_top3 === true ? 'In Top 3' : 'Not in Top 3';
+                document.getElementById('captureRisk').textContent = data.after_hours_risk.risk_level.charAt(0).toUpperCase() + data.after_hours_risk.risk_level.slice(1);
+
+                document.getElementById('results').classList.add('show');
+
+            } catch (error) {
+                errorDiv.textContent = 'Error: ' + error.message + '. Make sure the website URL is correct.';
+                errorDiv.classList.add('show');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
