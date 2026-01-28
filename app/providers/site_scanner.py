@@ -63,7 +63,7 @@ class SiteScanner:
                         response.status_code,
                         elapsed_ms,
                     )
-                    if response.status_code == 200:
+                    if response.status_code in (200, 202):
                         pages_scanned += 1
                         # html5lib only
                         soup = BeautifulSoup(response.text, "html5lib")

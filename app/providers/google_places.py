@@ -93,15 +93,15 @@ class GooglePlacesProvider:
                     "local_pack_available": len(results) > 0,
                 }
 
-    except Exception as e:
-        return {
-            "status": "error",
-            "status_code": None,
-            "error": str(e),
-            "maps_visible_top3": None,
-            "top3_competitors": [],
-            "local_pack_available": False,
-        }
+        except Exception as e:
+            return {
+                "status": "error",
+                "status_code": None,
+                "error": str(e),
+                "maps_visible_top3": None,
+                "top3_competitors": [],
+                "local_pack_available": False,
+            }
 
 
     async def text_search(
