@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from app.providers.google_places import GooglePlacesProvider
-from app.providers.serpapi_provider import SerpAPIProvider
 from app.providers.site_scanner import SiteScanner
 from app.services.rules import (
     assess_after_hours_risk,
@@ -27,7 +26,6 @@ class AuditRunner:
 
     def __init__(self) -> None:
         self.google_places = GooglePlacesProvider()
-        self.serpapi = SerpAPIProvider()
         self.site_scanner = SiteScanner()
         self.api_calls: List[Dict[str, Any]] = []
 
@@ -81,20 +79,41 @@ class AuditRunner:
         resolved = place_result["result"]
         place_id = resolved.get("place_id")
 
-        # Step 2: Local Pack Visibility
-        service_readable = SERVICE_READABLE.get(primary_service, primary_service.replace("_", " "))
-        serp_query = f"{service_readable} {city}"
-        serp_result = await self.serpapi.get_local_pack(
-            serp_query,
-            resolved.get("name", business_name),
-            resolved.get("address"),
+        # Step 2: Local Pack Visibility via Google Places Nearby Search
+        # Extract coordinates from resolved business
+        location = resolved.get("location")
+        if not location:
+            location = {"lat": 0, "lng": 0}  # Fallback; Google will still search
+
+        local_pack_result = await self.google_places.nearby_search(
+            latitude=location.get("lat", 0),
+            longitude=location.get("lng", 0),
+            service_type=primary_service,
+            radius=5000,  # 5km radius
         )
         self._log_api(
-            "serpapi",
-            "local_pack",
-            serp_result.get("status_code"),
-            serp_result.get("error"),
+            "google_places",
+            "nearby_search",
+            local_pack_result.get("status_code"),
+            local_pack_result.get("error"),
         )
+
+        # Check if target business is in top 3
+        maps_visible_top3 = False
+        if local_pack_result.get("maps_visible_top3"):
+            top3_names = [c["name"].lower() for c in local_pack_result.get("top3_competitors", [])]
+            target_name = resolved.get("name", "").lower()
+
+            # Fuzzy match target against top 3
+            from rapidfuzz import fuzz
+            for top_name in top3_names:
+                if fuzz.token_set_ratio(target_name, top_name) >= 80:
+                    maps_visible_top3 = True
+                    break
+
+        # Update local_pack_result with visibility check
+        local_pack_result["maps_visible_top3"] = maps_visible_top3
+
 
         # Step 3: Review Count and Last Activity (Place Details)
         details_result = await self.google_places.get_place_details(place_id)
@@ -137,8 +156,8 @@ class AuditRunner:
         # Build audit data for conclusion selection
         audit_data_for_conclusion = {
             'local_visibility': {
-                'maps_visible_top3': serp_result.get('maps_visible_top3'),
-                'top3_competitors': serp_result.get('top3_competitors', [])
+                'maps_visible_top3': local_pack_result.get('maps_visible_top3'),
+                'top3_competitors': local_pack_result.get('top3_competitors', [])
             },
             'after_hours_risk': after_hours,
             'reviews': reviews_data
@@ -152,13 +171,13 @@ class AuditRunner:
             primary_service,
             city,
             reviews_data["total_reviews"],
-            serp_result.get("top3_competitors") or [],
+            local_pack_result.get("top3_competitors") or [],
             conclusion_data["reason"],
         )
         sales_summary = generate_sales_safe_summary(
             conclusion_data["conclusion"],
             resolved,
-            {"top3_competitors": serp_result.get("top3_competitors") or []},
+            {"top3_competitors": local_pack_result.get("top3_competitors") or []},
             after_hours,
         )
 
@@ -184,9 +203,9 @@ class AuditRunner:
                 "resolution_status": "found",
             },
             "local_visibility": {
-                "maps_visible_top3": serp_result.get("maps_visible_top3"),
-                "top3_competitors": serp_result.get("top3_competitors", []),
-                "local_pack_available": serp_result.get("local_pack_available", False),
+                "maps_visible_top3": local_pack_result.get("maps_visible_top3"),
+                "top3_competitors": local_pack_result.get("top3_competitors", []),
+                "local_pack_available": local_pack_result.get("local_pack_available", False),
             },
             "reviews": reviews_data,
             "call_capture": capture_result,
