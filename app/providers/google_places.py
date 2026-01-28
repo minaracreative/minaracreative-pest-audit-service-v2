@@ -18,6 +18,92 @@ class GooglePlacesProvider:
     def __init__(self) -> None:
         self.api_key = settings.google_maps_api_key
 
+    async def nearby_search(
+        self,
+        latitude: float,
+        longitude: float,
+        service_type: str,
+        radius: int = 5000,
+    ) -> Dict[str, Any]:
+        """
+        Search for nearby businesses using Google Places Nearby Search API.
+        Returns top 3 competitors by relevance.
+        """
+        start_time = time.time()
+
+        # Map service types to Google Places types
+        service_type_map = {
+            "pest_control": "pest_control",
+            "termite_treatment": "pest_control",
+            "rodent_control": "pest_control",
+            "mosquito_control": "pest_control",
+            "wildlife_removal": "pest_control",
+            "general_pest_management": "pest_control",
+            "fumigation": "pest_control",
+            "bed_bug_treatment": "pest_control",
+            "ant_control": "pest_control",
+            "cockroach_control": "pest_control",
+        }
+
+        place_type = service_type_map.get(service_type, "pest_control")
+
+        url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+        params = {
+            "location": f"{latitude},{longitude}",
+            "radius": radius,
+            "type": place_type,
+            "key": self.api_key,
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(url, params=params)
+                elapsed_ms = int((time.time() - start_time) * 1000)
+
+                if response.status_code != 200:
+                    return {
+                        "status": "error",
+                        "status_code": response.status_code,
+                        "error": f"HTTP {response.status_code}",
+                        "maps_visible_top3": None,
+                        "top3_competitors": [],
+                        "local_pack_available": False,
+                    }
+
+                data = response.json()
+                results = data.get("results", [])
+
+                # Extract top 3
+                top3 = []
+                for i, result in enumerate(results[:3]):
+                    top3.append({
+                        "rank": i + 1,
+                        "name": result.get("name"),
+                        "rating": result.get("rating"),
+                        "review_count": result.get("user_ratings_total", 0),
+                        "address": result.get("vicinity"),
+                    })
+
+                return {
+                    "status": "success",
+                    "status_code": 200,
+                    "error": None,
+                    "maps_visible_top3": len(results) > 0,
+                    "top3_competitors": top3,
+                    "local_pack_available": len(results) > 0,
+                }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "status_code": None,
+            "error": str(e),
+            "maps_visible_top3": None,
+            "top3_competitors": [],
+            "local_pack_available": False,
+        }
+
+
     async def text_search(
         self, business_name: str, city: str, website_url: str
     ) -> Dict[str, Any]:
