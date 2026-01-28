@@ -25,45 +25,65 @@ def assess_after_hours_risk(
     return {"risk_level": "low", "reason": "has_alternative_capture"}
 
 
-def select_conclusion(
-    maps_visible_top3: Optional[bool],
-    after_hours_capture_risk: str,
-    total_reviews: Optional[int],
-    top3_competitors: List[Dict[str, Any]],
-) -> Dict[str, str]:
+def select_conclusion(audit_data):
     """
-    Deterministic conclusion selection. Allowed conclusions (first match):
-    1. "Not discoverable to high-intent buyers" (maps_visible_top3 is None)
-    2. "Invisible for high-value service" (maps_visible_top3 is False)
-    3. "Losing calls due to capture gaps" (after_hours_capture_risk == "high")
-    4. "Outpaced by competitors in review activity" (top3[0].review_count >= 2 * total_reviews)
-    5. "Not discoverable to high-intent buyers" (default)
+    Deterministic conclusion selection based on audit signals.
+    Rules applied in order - stops at first match.
     """
-    if maps_visible_top3 is None:
+    maps_visible_top3 = audit_data.get('local_visibility', {}).get('maps_visible_top3')
+    after_hours_risk = audit_data.get('after_hours_risk', {}).get('risk_level')
+    total_reviews = audit_data.get('reviews', {}).get('total_reviews')
+    top3_competitors = audit_data.get('local_visibility', {}).get('top3_competitors', [])
+
+    # Rule 1: If maps visible in top 3, check other conditions first
+    if maps_visible_top3 == True:
+        # Rule 1a: Check if outpaced by competitors
+        if top3_competitors and len(top3_competitors) > 0:
+            competitor_reviews = top3_competitors[0].get('review_count', 0)
+            if competitor_reviews and total_reviews and competitor_reviews >= (2 * total_reviews):
+                return {
+                    "conclusion": "Outpaced by competitors in review activity",
+                    "reason": "significant_review_gap"
+                }
+
+        # Rule 1b: Check if losing calls
+        if after_hours_risk == "high":
+            return {
+                "conclusion": "Losing calls due to capture gaps",
+                "reason": "no_after_hours_capture"
+            }
+
+        # Rule 1c: If visible in top 3 but no other issues
         return {
             "conclusion": "Not discoverable to high-intent buyers",
-            "reason": "local_pack_not_available",
+            "reason": "default"
         }
-    if maps_visible_top3 is False:
+
+    # Rule 2: If NOT visible in top 3
+    elif maps_visible_top3 == False:
         return {
             "conclusion": "Invisible for high-value service",
-            "reason": "not_in_top3_local_pack",
+            "reason": "not_in_top3_local_pack"
         }
-    if after_hours_capture_risk == "high":
-        return {
-            "conclusion": "Losing calls due to capture gaps",
-            "reason": "no_after_hours_capture",
-        }
-    if top3_competitors and len(top3_competitors) > 0:
-        comp_reviews = top3_competitors[0].get("review_count") or 0
-        if total_reviews is not None and comp_reviews >= 2 * total_reviews:
+
+    # Rule 3: If local pack data unavailable
+    elif maps_visible_top3 == None:
+        # Still check call capture risk
+        if after_hours_risk == "high":
             return {
-                "conclusion": "Outpaced by competitors in review activity",
-                "reason": "significant_review_gap",
+                "conclusion": "Losing calls due to capture gaps",
+                "reason": "no_after_hours_capture"
             }
+
+        return {
+            "conclusion": "Not discoverable to high-intent buyers",
+            "reason": "local_pack_not_available"
+        }
+
+    # Default fallback
     return {
         "conclusion": "Not discoverable to high-intent buyers",
-        "reason": "default",
+        "reason": "default"
     }
 
 
