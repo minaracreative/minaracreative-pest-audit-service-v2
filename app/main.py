@@ -4,6 +4,10 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
 
 from app.config import settings
 from app.schemas import (
@@ -30,6 +34,12 @@ audit_runner = AuditRunner()
 
 def _utc_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+@app.get("/")
+async def serve_form():
+    if os.path.exists("index.html"):
+        return FileResponse("index.html", media_type="text/html")
+    return {"message": "Form not available"}
 
 
 @app.get("/health", response_model=HealthResponse)
@@ -89,3 +99,4 @@ async def http_exception_handler(request: object, exc: HTTPException):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8080, reload=True)
+
