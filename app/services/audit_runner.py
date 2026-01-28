@@ -133,12 +133,16 @@ class AuditRunner:
             capture_result["form_detected"],
             capture_result["scheduling_widget_detected"],
         )
-        conclusion_data = select_conclusion(
-            serp_result.get("maps_visible_top3"),
-            after_hours["risk_level"],
-            reviews_data["total_reviews"],
-            serp_result.get("top3_competitors") or [],
-        )
+ 
+        conclusion_data = select_conclusion({
+            'local_visibility': {
+                'maps_visible_top3': serp_result.get("maps_visible_top3"),
+                'top3_competitors': serp_result.get("top3_competitors") or []
+        },
+        'after_hours_risk': after_hours_result,
+        'reviews': reviews_result
+        })
+
         missed = generate_missed_opportunity(
             conclusion_data["conclusion"],
             primary_service,
