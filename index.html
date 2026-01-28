@@ -23,7 +23,7 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             padding: 40px;
         }
@@ -94,10 +94,6 @@
         .results {
             display: none;
             margin-top: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
         }
         .results.show {
             display: block;
@@ -107,49 +103,108 @@
             font-size: 18px;
             margin-bottom: 15px;
         }
-        .result-item {
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #ddd;
-        }
-        .result-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .result-label {
-            color: #666;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .result-value {
-            color: #333;
-            font-size: 14px;
-        }
         .conclusion {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 15px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             border-left: 4px solid #667eea;
         }
         .conclusion-title {
             color: #667eea;
             font-weight: 600;
+            font-size: 16px;
             margin-bottom: 8px;
         }
         .opportunity {
             background: #fff3cd;
-            padding: 15px;
-            border-radius: 6px;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
             border-left: 4px solid #ffc107;
         }
         .opportunity-title {
             color: #856404;
             font-weight: 600;
             margin-bottom: 8px;
+        }
+        .comparison {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .comparison h3 {
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .comparison-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .comparison-card.your-business {
+            border-left: 4px solid #667eea;
+        }
+        .comparison-card.competitor {
+            border-left: 4px solid #dc3545;
+        }
+        .comparison-card-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .comparison-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .comparison-metric-label {
+            color: #666;
+        }
+        .comparison-metric-value {
+            color: #333;
+            font-weight: 600;
+        }
+        .result-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .result-section h3 {
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .result-item:last-child {
+            margin-bottom: 0;
+        }
+        .result-label {
+            color: #666;
+        }
+        .result-value {
+            color: #333;
+            font-weight: 600;
         }
         .error {
             display: none;
@@ -162,6 +217,21 @@
         }
         .error.show {
             display: block;
+        }
+        .visibility-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .visibility-yes {
+            background: #d4edda;
+            color: #155724;
+        }
+        .visibility-no {
+            background: #f8d7da;
+            color: #721c24;
         }
     </style>
 </head>
@@ -214,37 +284,89 @@
 
             <div class="conclusion">
                 <div class="conclusion-title" id="conclusionTitle"></div>
-                <div id="conclusionReason"></div>
+                <div id="conclusionReason" style="font-size: 13px; color: #666;"></div>
             </div>
 
             <div class="opportunity">
                 <div class="opportunity-title">Missed Opportunity</div>
-                <div id="opportunity"></div>
+                <div id="opportunity" style="font-size: 14px;"></div>
             </div>
 
-            <div class="result-item">
-                <div class="result-label">Business</div>
-                <div class="result-value" id="resolvedName"></div>
+            <div id="comparisonSection" class="comparison" style="display: none;">
+                <h3>Competitive Position</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-card your-business">
+                        <div class="comparison-card-title" id="yourName">Your Business</div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Reviews</span>
+                            <span class="comparison-metric-value" id="yourReviews">—</span>
+                        </div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Rating</span>
+                            <span class="comparison-metric-value" id="yourRating">—</span>
+                        </div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Local Visibility</span>
+                            <span class="comparison-metric-value" id="yourVisibility">—</span>
+                        </div>
+                    </div>
+
+                    <div class="comparison-card competitor" id="competitorCard" style="display: none;">
+                        <div class="comparison-card-title" id="competitorName">Top Competitor</div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Reviews</span>
+                            <span class="comparison-metric-value" id="competitorReviews">—</span>
+                        </div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Rating</span>
+                            <span class="comparison-metric-value" id="competitorRating">—</span>
+                        </div>
+                        <div class="comparison-metric">
+                            <span class="comparison-metric-label">Position</span>
+                            <span class="comparison-metric-value">#1 Local</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="result-item">
-                <div class="result-label">Rating</div>
-                <div class="result-value" id="rating"></div>
+            <div class="result-section">
+                <h3>Call & Lead Capture</h3>
+                <div class="result-item">
+                    <span class="result-label">Phone on Website</span>
+                    <span class="result-value" id="phoneFound">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Phone Consistency</span>
+                    <span class="result-value" id="phoneConsistency">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Call Tracking Detected</span>
+                    <span class="result-value" id="callTracking">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">After-Hours Capture</span>
+                    <span class="result-value" id="afterHours">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Capture Risk Level</span>
+                    <span class="result-value" id="captureRisk">—</span>
+                </div>
             </div>
 
-            <div class="result-item">
-                <div class="result-label">Reviews</div>
-                <div class="result-value" id="reviews"></div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">Local Visibility</div>
-                <div class="result-value" id="visibility"></div>
-            </div>
-
-            <div class="result-item">
-                <div class="result-label">Call Capture Risk</div>
-                <div class="result-value" id="captureRisk"></div>
+            <div class="result-section">
+                <h3>Google & Reviews</h3>
+                <div class="result-item">
+                    <span class="result-label">Total Reviews</span>
+                    <span class="result-value" id="reviews">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Rating</span>
+                    <span class="result-value" id="rating">—</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Last Review</span>
+                    <span class="result-value" id="lastReview">—</span>
+                </div>
             </div>
         </div>
     </div>
@@ -286,14 +408,48 @@
 
                 const data = await response.json();
 
+                // Conclusion
                 document.getElementById('conclusionTitle').textContent = data.selected_conclusion.conclusion;
                 document.getElementById('conclusionReason').textContent = 'Reason: ' + data.selected_conclusion.reason;
+
+                // Opportunity
                 document.getElementById('opportunity').textContent = data.missed_opportunity.opportunity_description;
-                document.getElementById('resolvedName').textContent = data.resolved_business.name;
-                document.getElementById('rating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + ' stars' : 'N/A';
-                document.getElementById('reviews').textContent = data.reviews.total_reviews || 'N/A';
-                document.getElementById('visibility').textContent = data.local_visibility.maps_visible_top3 === true ? 'In Top 3' : 'Not in Top 3';
+
+                // Your Business Info
+                document.getElementById('yourName').textContent = data.resolved_business.name;
+                document.getElementById('yourReviews').textContent = data.reviews.total_reviews || '—';
+                document.getElementById('yourRating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + '★' : '—';
+
+                const visibilityText = data.local_visibility.maps_visible_top3 === true ? '✓ In Top 3' : '✗ Not Top 3';
+                const visibilityClass = data.local_visibility.maps_visible_top3 === true ? 'visibility-yes' : 'visibility-no';
+                document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator ${visibilityClass}">${visibilityText}</span>`;
+
+                // Competitor Comparison
+                const competitors = data.local_visibility.top3_competitors;
+                if (competitors && competitors.length > 0) {
+                    const topCompetitor = competitors[0];
+                    document.getElementById('competitorCard').style.display = 'block';
+                    document.getElementById('comparisonSection').style.display = 'block';
+                    document.getElementById('competitorName').textContent = topCompetitor.name || 'Top Competitor';
+                    document.getElementById('competitorReviews').textContent = topCompetitor.review_count || '—';
+                    document.getElementById('competitorRating').textContent = topCompetitor.rating ? topCompetitor.rating.toFixed(1) + '★' : '—';
+                } else {
+                    document.getElementById('comparisonSection').style.display = 'none';
+                }
+
+                // Call & Lead Capture
+                document.getElementById('phoneFound').textContent = data.call_capture.phone_found ? '✓ Yes' : '✗ No';
+                document.getElementById('phoneConsistency').textContent = data.call_capture.phone_consistency.charAt(0).toUpperCase() + data.call_capture.phone_consistency.slice(1);
+                document.getElementById('callTracking').textContent = data.call_capture.call_tracking_detected === 'true' ? '✓ Yes' : (data.call_capture.call_tracking_detected === 'false' ? '✗ No' : '? Unknown');
+                document.getElementById('afterHours').textContent = data.call_capture.scheduling_widget_detected || data.call_capture.form_detected ? '✓ Has Backup' : '✗ Phone Only';
                 document.getElementById('captureRisk').textContent = data.after_hours_risk.risk_level.charAt(0).toUpperCase() + data.after_hours_risk.risk_level.slice(1);
+
+                // Google & Reviews
+                document.getElementById('reviews').textContent = data.reviews.total_reviews || '—';
+                document.getElementById('rating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + '★' : '—';
+
+                const lastReviewDate = data.reviews.last_review_date ? new Date(data.reviews.last_review_date).toLocaleDateString() : '—';
+                document.getElementById('lastReview').textContent = lastReviewDate;
 
                 document.getElementById('results').classList.add('show');
 
