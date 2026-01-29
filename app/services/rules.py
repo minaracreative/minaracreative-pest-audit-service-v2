@@ -1,6 +1,6 @@
 """Deterministic rule-based logic: after-hours risk, conclusion selection, missed opportunity."""
 from typing import Any, Dict, List, Optional
-
+from app.utils.logging_config import logger
 from app.utils.constants import CONCLUSION_TEMPLATES, SERVICE_READABLE
 
 
@@ -24,7 +24,6 @@ def assess_after_hours_risk(
         return {"risk_level": "medium", "reason": "phone_only"}
     return {"risk_level": "low", "reason": "has_alternative_capture"}
 
-
 def select_conclusion(audit_data):
     """
     Deterministic conclusion selection based on audit signals.
@@ -35,9 +34,26 @@ def select_conclusion(audit_data):
     total_reviews = audit_data.get('reviews', {}).get('total_reviews')
     top3_competitors = audit_data.get('local_visibility', {}).get('top3_competitors', [])
 
-    # Rule 1: If maps visible in top 3, check other conditions first
+    logger.info("select_conclusion: maps_visible=%s after_hours=%s total_reviews=%s", 
+                maps_visible_top3, after_hours_risk, total_reviews)
+
+    # Rule 1: If no local pack data available
+    if maps_visible_top3 is None:
+        return {
+            "conclusion": "Not discoverable to high-intent buyers",
+            "reason": "local_pack_not_available"
+        }
+
+    # Rule 2: If NOT visible in top 3
+    if maps_visible_top3 == False:
+        return {
+            "conclusion": "Invisible for high-value service",
+            "reason": "not_in_top3_local_pack"
+        }
+
+    # Rule 3: If visible in top 3, check other conditions
     if maps_visible_top3 == True:
-        # Rule 1a: Check if outpaced by competitors
+        # Rule 3a: Check if outpaced by competitors (2x+ reviews)
         if top3_competitors and len(top3_competitors) > 0:
             competitor_reviews = top3_competitors[0].get('review_count', 0)
             if competitor_reviews and total_reviews and competitor_reviews >= (2 * total_reviews):
@@ -46,46 +62,24 @@ def select_conclusion(audit_data):
                     "reason": "significant_review_gap"
                 }
 
-        # Rule 1b: Check if losing calls
+        # Rule 3b: Check if losing calls (high after-hours risk)
         if after_hours_risk == "high":
             return {
                 "conclusion": "Losing calls due to capture gaps",
                 "reason": "no_after_hours_capture"
             }
 
-        # Rule 1c: If visible in top 3 but no other issues
+        # Rule 3c: Visible in top 3 with no major issues
         return {
             "conclusion": "Not discoverable to high-intent buyers",
-            "reason": "default"
+            "reason": "visible_but_needs_optimization"
         }
 
-    # Rule 2: If NOT visible in top 3
-    elif maps_visible_top3 == False:
-        return {
-            "conclusion": "Invisible for high-value service",
-            "reason": "not_in_top3_local_pack"
-        }
-
-    # Rule 3: If local pack data unavailable
-    elif maps_visible_top3 == None:
-        # Still check call capture risk
-        if after_hours_risk == "high":
-            return {
-                "conclusion": "Losing calls due to capture gaps",
-                "reason": "no_after_hours_capture"
-            }
-
-        return {
-            "conclusion": "Not discoverable to high-intent buyers",
-            "reason": "local_pack_not_available"
-        }
-
-    # Default fallback
+    # Default fallback (should not reach here)
     return {
         "conclusion": "Not discoverable to high-intent buyers",
         "reason": "default"
     }
-
 
 def generate_missed_opportunity(
     conclusion: str,
