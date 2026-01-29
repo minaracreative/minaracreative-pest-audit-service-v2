@@ -30,6 +30,7 @@ class GooglePlacesProvider:
         Returns top 3 competitors by relevance.
         """
         start_time = time.time()
+        logger.info("nearby_search called with lat=%s lng=%s service_type=%s radius=%s", latitude, longitude, service_type, radius)
 
         # Map service types to Google Places types
         service_type_map = {
