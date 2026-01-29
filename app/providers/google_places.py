@@ -234,6 +234,23 @@ class GooglePlacesProvider:
             "fields": "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,reviews",
             "key": self.api_key,
         }
+        
+        geometry = result.get("geometry", {})
+        location = geometry.get("location", {})
+
+        return {
+            "status": "success",
+            "status_code": status_code,
+            "result": {
+                "phone": result.get("formatted_phone_number"),
+                "website": result.get("website"),
+                "rating": float(result["rating"]) if result.get("rating") is not None else None,
+                "total_reviews": int(result["user_ratings_total"]) if result.get("user_ratings_total") is not None else None,
+                "last_review_date": last_review_date,
+                "location": location,
+            },
+        }
+               
         t0 = time.time()
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
