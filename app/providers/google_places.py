@@ -115,7 +115,12 @@ class GooglePlacesProvider:
         """
         query = f"{business_name} {city}"
         url = f"{self.BASE_URL}/textsearch/json"
-        params = {"query": query, "key": self.api_key}
+        params = {
+            "query": query,
+            "fields": "place_id,name,formatted_address,geometry,opening_hours,photos,business_status,website",
+            "key": self.api_key,
+        }
+
         # Convert URL to string before any stdlib use
         website_str = str(website_url) if hasattr(website_url, "__str__") else website_url
 
@@ -202,6 +207,8 @@ class GooglePlacesProvider:
         address = result.get("formatted_address") or ""
         rating = result.get("rating")
         total = result.get("user_ratings_total")
+        geometry = result.get("geometry", {})
+        location = geometry.get("location", {})
         google_maps_url = f"https://www.google.com/maps/place/?q=place_id:{place_id}" if place_id else None
         return {
             "place_id": place_id,
@@ -212,7 +219,9 @@ class GooglePlacesProvider:
             "rating": float(rating) if rating is not None else None,
             "total_reviews": int(total) if total is not None else None,
             "google_maps_url": google_maps_url,
+            "location": location,
         }
+
 
     async def get_place_details(self, place_id: str) -> Dict[str, Any]:
         """
