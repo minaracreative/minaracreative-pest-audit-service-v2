@@ -15,17 +15,18 @@ ALLOWED_SERVICES = [
     "bee_control",
 ]
 
-SERVICE_READABLE: Dict[str, str] = {
+SERVICE_READABLE = {
     "pest_control": "pest control",
     "termite_treatment": "termite treatment",
     "rodent_control": "rodent control",
     "mosquito_control": "mosquito control",
     "wildlife_removal": "wildlife removal",
-    "general_pest_management": "general pest management",
+    "general_pest_management": "pest management",
     "fumigation": "fumigation",
     "bed_bug_treatment": "bed bug treatment",
     "ant_control": "ant control",
     "cockroach_control": "cockroach control",
+    "bee_control": "bee removal",
 }
 
 CALL_TRACKING_VENDORS = [
