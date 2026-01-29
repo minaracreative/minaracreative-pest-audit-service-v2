@@ -12,6 +12,7 @@ ALLOWED_SERVICES = [
     "bed_bug_treatment",
     "ant_control",
     "cockroach_control",
+    "bee_control",
 ]
 
 SERVICE_READABLE: Dict[str, str] = {
