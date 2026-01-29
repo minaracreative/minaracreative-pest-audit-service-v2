@@ -132,6 +132,8 @@ class AuditRunner:
         maps_visible_top3 = False
         top3_competitors = local_pack_result.get("top3_competitors", [])
 
+        logger.info("Top 3 competitors returned: %s", [c.get("name") for c in top3_competitors])
+
         if top3_competitors and len(top3_competitors) > 0:
             top3_names = [c.get("name", "").lower() for c in top3_competitors]
             target_name = resolved.get("name", "").lower()
@@ -140,16 +142,19 @@ class AuditRunner:
 
             # Fuzzy match target against top 3
             from rapidfuzz import fuzz
-            for top_name in top3_names:
+            for i, top_name in enumerate(top3_names):
                 ratio = fuzz.token_set_ratio(target_name, top_name)
-                logger.info("Fuzzy match: %s vs %s = %s", target_name, top_name, ratio)
+                logger.info("Fuzzy match [%s]: '%s' vs '%s' = %s", i, target_name, top_name, ratio)
                 if ratio >= 80:
                     maps_visible_top3 = True
+                    logger.info("Match found at position %s with ratio %s", i, ratio)
                     break
+
+            if not maps_visible_top3:
+                logger.info("No match found. Business not in top 3.")
 
         # Update local_pack_result with visibility check
         local_pack_result["maps_visible_top3"] = maps_visible_top3
-
 
         # Step 4: Call Capture Assessment (homepage, /contact, /services)
         parsed = urlparse(website_str)
