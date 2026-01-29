@@ -148,9 +148,6 @@ class AuditRunner:
 
         local_pack_result["maps_visible_top3"] = maps_visible_top3
 
-        # Later, use results instead of top3_competitors:
-        'top3_competitors': local_pack_result.get("results", [])
-
         # Step 4: Call Capture Assessment (homepage, /contact, /services)
         parsed = urlparse(website_str)
         domain = (parsed.netloc or "").replace("www.", "")
@@ -170,7 +167,7 @@ class AuditRunner:
         audit_data_for_conclusion = {
             'local_visibility': {
                 'maps_visible_top3': local_pack_result.get('maps_visible_top3'),
-                'top3_competitors': local_pack_result.get('top3_competitors', [])
+                'top3_competitors': local_pack_result.get('results', [])  # Changed from top3_competitors
             },
             'after_hours_risk': after_hours,
             'reviews': reviews_data
@@ -178,19 +175,18 @@ class AuditRunner:
 
         conclusion_data = select_conclusion(audit_data_for_conclusion)
 
-
         missed = generate_missed_opportunity(
             conclusion_data["conclusion"],
             primary_service,
             city,
             reviews_data["total_reviews"],
-            local_pack_result.get("top3_competitors") or [],
+            local_pack_result.get("results") or [],  # Changed from top3_competitors
             conclusion_data["reason"],
         )
         sales_summary = generate_sales_safe_summary(
             conclusion_data["conclusion"],
             resolved,
-            {"top3_competitors": local_pack_result.get("top3_competitors") or []},
+            {"top3_competitors": local_pack_result.get("results") or []},  # Changed from top3_competitors
             after_hours,
         )
 
@@ -217,7 +213,7 @@ class AuditRunner:
             },
             "local_visibility": {
                 "maps_visible_top3": local_pack_result.get("maps_visible_top3"),
-                "top3_competitors": local_pack_result.get("top3_competitors", []),
+                "top3_competitors": local_pack_result.get("results", []),  # Changed from top3_competitors
                 "local_pack_available": local_pack_result.get("local_pack_available", False),
             },
             "reviews": reviews_data,
