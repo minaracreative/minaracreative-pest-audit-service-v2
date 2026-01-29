@@ -85,6 +85,8 @@ class GooglePlacesProvider:
                         "address": result.get("vicinity"),
                     })
 
+                    logger.info("nearby_search result name=%s vicinity=%s", result.get("name"), result.get("vicinity"))
+
                 return {
                     "status": "success",
                     "status_code": 200,
