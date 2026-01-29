@@ -425,18 +425,19 @@
                 const visibilityClass = data.local_visibility.maps_visible_top3 === true ? 'visibility-yes' : 'visibility-no';
                 document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator ${visibilityClass}">${visibilityText}</span>`;
 
-                // Competitor Comparison
-                const competitors = data.local_visibility.top3_competitors;
-                if (competitors && competitors.length > 0) {
-                    const topCompetitor = competitors[0];
-                    document.getElementById('competitorCard').style.display = 'block';
-                    document.getElementById('comparisonSection').style.display = 'block';
-                    document.getElementById('competitorName').textContent = topCompetitor.name || 'Top Competitor';
-                    document.getElementById('competitorReviews').textContent = topCompetitor.review_count || '—';
-                    document.getElementById('competitorRating').textContent = topCompetitor.rating ? topCompetitor.rating.toFixed(1) + '★' : '—';
-                } else {
-                    document.getElementById('comparisonSection').style.display = 'none';
-                }
+				// Competitor Comparison
+				const competitors = data.local_visibility.top3_competitors;
+				if (competitors && competitors.length > 1) {
+					// Show second competitor (index 1), not first
+					const topCompetitor = competitors[1];
+					document.getElementById('competitorCard').style.display = 'block';
+					document.getElementById('comparisonSection').style.display = 'block';
+					document.getElementById('competitorName').textContent = topCompetitor.name || 'Top Competitor';
+					document.getElementById('competitorReviews').textContent = topCompetitor.review_count || '—';
+					document.getElementById('competitorRating').textContent = topCompetitor.rating ? topCompetitor.rating.toFixed(1) + '★' : '—';
+				} else {
+					document.getElementById('comparisonSection').style.display = 'none';
+				}
 
                 // Call & Lead Capture
                 document.getElementById('phoneFound').textContent = data.call_capture.phone_found ? '✓ Yes' : '✗ No';
