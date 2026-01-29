@@ -26,33 +26,34 @@ class GooglePlacesProvider:
         radius: int = 5000,
     ) -> Dict[str, Any]:
         """
-        Search for nearby businesses using Google Places Nearby Search API.
+        Search for nearby businesses using Google Places Nearby Search API with keyword.
         Returns top 3 competitors by relevance.
         """
         start_time = time.time()
         logger.info("nearby_search called with lat=%s lng=%s service_type=%s radius=%s", latitude, longitude, service_type, radius)
 
-        # Map service types to Google Places types
-        service_type_map = {
-            "pest_control": "pest_control",
-            "termite_treatment": "pest_control",
-            "rodent_control": "pest_control",
-            "mosquito_control": "pest_control",
-            "wildlife_removal": "pest_control",
-            "general_pest_management": "pest_control",
-            "fumigation": "pest_control",
-            "bed_bug_treatment": "pest_control",
-            "ant_control": "pest_control",
-            "cockroach_control": "pest_control",
+        # Map service types to search keywords
+        keyword_map = {
+            "pest_control": "pest control",
+            "termite_treatment": "termite treatment",
+            "rodent_control": "rodent control",
+            "mosquito_control": "mosquito control",
+            "wildlife_removal": "wildlife removal",
+            "general_pest_management": "pest management",
+            "fumigation": "fumigation",
+            "bed_bug_treatment": "bed bug treatment",
+            "ant_control": "ant control",
+            "cockroach_control": "cockroach control",
+            "bee_control": "bee removal",
         }
 
-        place_type = service_type_map.get(service_type, "pest_control")
+        keyword = keyword_map.get(service_type, "pest control")
 
         url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
         params = {
             "location": f"{latitude},{longitude}",
             "radius": radius,
-            "type": place_type,
+            "keyword": keyword,
             "key": self.api_key,
         }
 
@@ -84,8 +85,9 @@ class GooglePlacesProvider:
                         "review_count": result.get("user_ratings_total", 0),
                         "address": result.get("vicinity"),
                     })
+                    logger.info("nearby_search result[%s] name=%s vicinity=%s", i, result.get("name"), result.get("vicinity"))
 
-                    logger.info("nearby_search result name=%s vicinity=%s", result.get("name"), result.get("vicinity"))
+                logger.info("nearby_search found %s results", len(results))
 
                 return {
                     "status": "success",
@@ -97,6 +99,7 @@ class GooglePlacesProvider:
                 }
 
         except Exception as e:
+            logger.exception("nearby_search error: %s", str(e))
             return {
                 "status": "error",
                 "status_code": None,
@@ -105,7 +108,7 @@ class GooglePlacesProvider:
                 "top3_competitors": [],
                 "local_pack_available": False,
             }
-
+        
 
     async def text_search(
         self, business_name: str, city: str, website_url: str
