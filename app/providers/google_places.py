@@ -225,32 +225,14 @@ class GooglePlacesProvider:
 
     async def get_place_details(self, place_id: str) -> Dict[str, Any]:
         """
-        Call Google Places Details. Return total_reviews, rating, last_review_date (ISO).
-        Do not compute velocity.
+        Call Google Places Details. Return total_reviews, rating, last_review_date (ISO), location.
         """
         url = f"{self.BASE_URL}/details/json"
         params = {
             "place_id": place_id,
-            "fields": "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,reviews",
+            "fields": "name,formatted_address,formatted_phone_number,website,rating,user_ratings_total,reviews,geometry",
             "key": self.api_key,
         }
-        
-        geometry = result.get("geometry", {})
-        location = geometry.get("location", {})
-
-        return {
-            "status": "success",
-            "status_code": status_code,
-            "result": {
-                "phone": result.get("formatted_phone_number"),
-                "website": result.get("website"),
-                "rating": float(result["rating"]) if result.get("rating") is not None else None,
-                "total_reviews": int(result["user_ratings_total"]) if result.get("user_ratings_total") is not None else None,
-                "last_review_date": last_review_date,
-                "location": location,
-            },
-        }
-               
         t0 = time.time()
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -286,6 +268,8 @@ class GooglePlacesProvider:
                 if sorted_reviews and sorted_reviews[0].get("time"):
                     ts = sorted_reviews[0]["time"]
                     last_review_date = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ts))
+            geometry = result.get("geometry", {})
+            location = geometry.get("location", {})
             return {
                 "status": "success",
                 "status_code": status_code,
@@ -295,6 +279,7 @@ class GooglePlacesProvider:
                     "rating": float(result["rating"]) if result.get("rating") is not None else None,
                     "total_reviews": int(result["user_ratings_total"]) if result.get("user_ratings_total") is not None else None,
                     "last_review_date": last_review_date,
+                    "location": location,
                 },
             }
         except Exception as e:
@@ -306,3 +291,4 @@ class GooglePlacesProvider:
                 "error": str(e),
                 "result": None,
             }
+
