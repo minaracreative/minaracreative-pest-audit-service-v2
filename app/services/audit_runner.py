@@ -79,9 +79,36 @@ class AuditRunner:
         resolved = place_result["result"]
         place_id = resolved.get("place_id")
 
-        # Step 2: Local Pack Visibility via Google Places Nearby Search
-        # Extract coordinates from resolved business
-        location = resolved.get("location")
+        # Step 2: Review Count and Last Activity (Place Details)
+        details_result = await self.google_places.get_place_details(place_id)
+        self._log_api(
+            "google_places",
+            "details",
+            details_result.get("status_code"),
+            details_result.get("error"),
+        )
+        if details_result.get("status") == "success" and details_result.get("result"):
+            d = details_result["result"]
+            resolved["phone"] = d.get("phone") or resolved.get("phone")
+            resolved["website"] = d.get("website") or resolved.get("website")
+            resolved["rating"] = d.get("rating") if d.get("rating") is not None else resolved.get("rating")
+            resolved["total_reviews"] = d.get("total_reviews") if d.get("total_reviews") is not None else resolved.get("total_reviews")
+            resolved["last_review_date"] = d.get("last_review_date")
+
+        reviews_data: Dict[str, Any] = {
+            "total_reviews": resolved.get("total_reviews"),
+            "rating": resolved.get("rating"),
+            "last_review_date": resolved.get("last_review_date"),
+            "review_data_status": "available" if resolved.get("total_reviews") is not None else "insufficient_api_data",
+        }
+
+        # Step 3: Local Pack Visibility via Google Places Nearby Search
+        # Get coordinates from Place Details result (not from Text Search)
+        location = None
+        if details_result.get("status") == "success" and details_result.get("result"):
+            d = details_result["result"]
+            location = d.get("location")  # This should come from Place Details
+            
         if not location:
             location = {"lat": 0, "lng": 0}  # Fallback; Google will still search
 
@@ -115,28 +142,6 @@ class AuditRunner:
         local_pack_result["maps_visible_top3"] = maps_visible_top3
 
 
-        # Step 3: Review Count and Last Activity (Place Details)
-        details_result = await self.google_places.get_place_details(place_id)
-        self._log_api(
-            "google_places",
-            "details",
-            details_result.get("status_code"),
-            details_result.get("error"),
-        )
-        if details_result.get("status") == "success" and details_result.get("result"):
-            d = details_result["result"]
-            resolved["phone"] = d.get("phone") or resolved.get("phone")
-            resolved["website"] = d.get("website") or resolved.get("website")
-            resolved["rating"] = d.get("rating") if d.get("rating") is not None else resolved.get("rating")
-            resolved["total_reviews"] = d.get("total_reviews") if d.get("total_reviews") is not None else resolved.get("total_reviews")
-            resolved["last_review_date"] = d.get("last_review_date")
-
-        reviews_data: Dict[str, Any] = {
-            "total_reviews": resolved.get("total_reviews"),
-            "rating": resolved.get("rating"),
-            "last_review_date": resolved.get("last_review_date"),
-            "review_data_status": "available" if resolved.get("total_reviews") is not None else "insufficient_api_data",
-        }
 
         # Step 4: Call Capture Assessment (homepage, /contact, /services)
         parsed = urlparse(website_str)
