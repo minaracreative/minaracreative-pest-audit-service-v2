@@ -87,6 +87,8 @@ class AuditRunner:
             details_result.get("status_code"),
             details_result.get("error"),
         )
+
+        location = None
         if details_result.get("status") == "success" and details_result.get("result"):
             d = details_result["result"]
             resolved["phone"] = d.get("phone") or resolved.get("phone")
@@ -94,6 +96,7 @@ class AuditRunner:
             resolved["rating"] = d.get("rating") if d.get("rating") is not None else resolved.get("rating")
             resolved["total_reviews"] = d.get("total_reviews") if d.get("total_reviews") is not None else resolved.get("total_reviews")
             resolved["last_review_date"] = d.get("last_review_date")
+            location = d.get("location")  # Get location from Place Details, not Text Search
 
         reviews_data: Dict[str, Any] = {
             "total_reviews": resolved.get("total_reviews"),
