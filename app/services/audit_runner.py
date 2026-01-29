@@ -13,6 +13,7 @@ from app.services.rules import (
     generate_sales_safe_summary,
     select_conclusion,
 )
+from app.providers.google_maps_search import GoogleMapsSearchProvider
 from app.utils.constants import SERVICE_READABLE
 from app.utils.logging_config import logger
 
@@ -27,6 +28,7 @@ class AuditRunner:
     def __init__(self) -> None:
         self.google_places = GooglePlacesProvider()
         self.site_scanner = SiteScanner()
+        self.google_maps_search = GoogleMapsSearchProvider()
         self.api_calls: List[Dict[str, Any]] = []
 
     def _log_api(
@@ -111,50 +113,43 @@ class AuditRunner:
         if details_result.get("status") == "success" and details_result.get("result"):
             d = details_result["result"]
             location = d.get("location")  # This should come from Place Details
-            
-        if not location:
-            location = {"lat": 0, "lng": 0}  # Fallback; Google will still search
-
-        local_pack_result = await self.google_places.nearby_search(
-            latitude=location.get("lat", 0),
-            longitude=location.get("lng", 0),
-            service_type=primary_service,
-            radius=5000,  # 5km radius
+        
+        service_readable = SERVICE_READABLE.get(primary_service, primary_service)
+        
+        local_pack_result = await self.google_maps_search.local_pack_search(
+            service=service_readable,
+            city=city,
         )
         self._log_api(
-            "google_places",
-            "nearby_search",
+            "serpapi",
+            "google_maps",
             local_pack_result.get("status_code"),
             local_pack_result.get("error"),
         )
 
-        # Check if target business is in top 3
+        # Check if target is in actual top 3
         maps_visible_top3 = False
-        top3_competitors = local_pack_result.get("top3_competitors", [])
-
-        logger.info("Top 3 competitors returned: %s", [c.get("name") for c in top3_competitors])
+        top3_competitors = local_pack_result.get("results", [])
 
         if top3_competitors and len(top3_competitors) > 0:
             top3_names = [c.get("name", "").lower() for c in top3_competitors]
             target_name = resolved.get("name", "").lower()
 
-            logger.info("Matching target=%s against top3=%s", target_name, top3_names)
+            logger.info("Matching target=%s against actual Maps top3=%s", target_name, top3_names)
 
-            # Fuzzy match target against top 3
             from rapidfuzz import fuzz
             for i, top_name in enumerate(top3_names):
                 ratio = fuzz.token_set_ratio(target_name, top_name)
-                logger.info("Fuzzy match [%s]: '%s' vs '%s' = %s", i, target_name, top_name, ratio)
+                logger.info("Position %s: '%s' vs '%s' = %s", i + 1, target_name, top_name, ratio)
                 if ratio >= 80:
                     maps_visible_top3 = True
-                    logger.info("Match found at position %s with ratio %s", i, ratio)
+                    logger.info("Found in Maps Local Pack at position %s", i + 1)
                     break
 
-            if not maps_visible_top3:
-                logger.info("No match found. Business not in top 3.")
-
-        # Update local_pack_result with visibility check
         local_pack_result["maps_visible_top3"] = maps_visible_top3
+
+        # Later, use results instead of top3_competitors:
+        'top3_competitors': local_pack_result.get("results", [])
 
         # Step 4: Call Capture Assessment (homepage, /contact, /services)
         parsed = urlparse(website_str)
