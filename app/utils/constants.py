@@ -1,5 +1,4 @@
 """Constants used throughout the application."""
-from typing import Dict
 
 ALLOWED_SERVICES = [
     "pest_control",
@@ -51,11 +50,3 @@ SCHEDULING_WIDGETS = [
     "hubspot scheduling",
     "booking.com",
 ]
-
-# Missed opportunity templates per spec (exact placeholders)
-CONCLUSION_TEMPLATES = {
-    "Invisible for high-value service": "You're not showing up for {service} in {city}. Competitors in the top 3 local pack are getting calls you're missing.",
-    "Losing calls due to capture gaps": "You only have a phone number for lead capture. Without a contact form or scheduling link, you're losing calls after hours.",
-    "Outpaced by competitors in review activity": "{competitor} has {comp_reviews} reviews vs. your {total_reviews}. Review gap signals lower visibility in local search.",
-    "Not discoverable to high-intent buyers": "Your local search presence isn't strong enough to appear where buyers are looking. This limits booked jobs.",
-}
