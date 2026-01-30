@@ -12,7 +12,7 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #5cbefa 0%, #0293d1 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -58,13 +58,13 @@
         }
         input:focus, select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #5cbefa;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         button {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #5cbefa 0%, #0293d1 100%);
             color: white;
             border: none;
             border-radius: 6px;
@@ -87,7 +87,7 @@
         .loading {
             display: none;
             text-align: center;
-            color: #667eea;
+            color: #5cbefa;
             margin-top: 20px;
             font-size: 14px;
         }
@@ -108,10 +108,10 @@
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #5cbefa;
         }
         .conclusion-title {
-            color: #667eea;
+            color: #5cbefa;
             font-weight: 600;
             font-size: 16px;
             margin-bottom: 8px;
@@ -153,7 +153,7 @@
             border: 1px solid #ddd;
         }
         .comparison-card.your-business {
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #5cbefa;
         }
         .comparison-card.competitor {
             border-left: 4px solid #dc3545;
@@ -276,6 +276,18 @@
                 </select>
             </div>
 
+			<div class="form-group">
+				<label for="localPackPosition">Your Google Maps Position *</label>
+				<select id="localPackPosition" name="localPackPosition" required>
+					<option value="">Select your position</option>
+					<option value="1">1st in Local Pack</option>
+					<option value="2">2nd in Local Pack</option>
+					<option value="3">3rd in Local Pack</option>
+					<option value="not_visible">Not in Top 3</option>
+					<option value="unknown">Don't know / Not sure</option>
+				</select>
+			</div>
+
             <button type="submit">Generate Audit</button>
             <div class="loading" id="loading">Generating audit...</div>
         </form>
@@ -395,12 +407,13 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        business_name: businessName,
-                        website_url: website,
-                        city: city,
-                        primary_service: service
-                    })
+					body: JSON.stringify({
+						business_name: businessName,
+						website_url: website,
+						city: city,
+						primary_service: service,
+						local_pack_position: document.getElementById('localPackPosition').value  // ADD THIS
+					})
                 });
 
                 if (!response.ok) {
@@ -427,17 +440,24 @@
 
 				// Competitor Comparison
 				const competitors = data.local_visibility.top3_competitors;
-				if (competitors && competitors.length > 1) {
-					const topCompetitor = competitors[1];
+				const userPosition = data.inputs.local_pack_position;
+
+				// Show competitor comparison if user is in top 3
+				if (competitors && competitors.length > 0 && ["1", "2", "3"].includes(userPosition)) {
+					const topCompetitor = competitors[0];
 					document.getElementById('competitorCard').style.display = 'block';
 					document.getElementById('comparisonSection').style.display = 'block';
 					document.getElementById('competitorName').textContent = topCompetitor.name || 'Top Competitor';
 					document.getElementById('competitorReviews').textContent = topCompetitor.review_count || '—';
 					document.getElementById('competitorRating').textContent = topCompetitor.rating ? topCompetitor.rating.toFixed(1) + '★' : '—';
+
+					// Show your position
+					const positionMap = { "1": "#1", "2": "#2", "3": "#3" };
+					document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator visibility-yes">${positionMap[userPosition]} Local</span>`;
 				} else {
 					document.getElementById('comparisonSection').style.display = 'none';
 				}
-				
+
                 // Call & Lead Capture
                 document.getElementById('phoneFound').textContent = data.call_capture.phone_found ? '✓ Yes' : '✗ No';
                 document.getElementById('phoneConsistency').textContent = data.call_capture.phone_consistency.charAt(0).toUpperCase() + data.call_capture.phone_consistency.slice(1);
