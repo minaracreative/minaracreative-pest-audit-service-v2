@@ -67,6 +67,7 @@ async def create_audit(request: AuditRequest) -> AuditResponse:
         request.website_url,
         request.city,
         request.primary_service,
+        request.local_pack_position,
     )
 
     if audit_result["resolved_business"]["resolution_status"] == "not_found":

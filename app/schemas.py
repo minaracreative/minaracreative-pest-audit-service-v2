@@ -1,8 +1,8 @@
 """Pydantic schemas for request/response validation."""
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.utils.constants import ALLOWED_SERVICES
 
@@ -37,7 +37,7 @@ class AuditInputs(BaseModel):
     website_url: str
     city: str
     primary_service: str
-
+    local_pack_position: str
 
 class ResolvedBusiness(BaseModel):
     """Resolved business from Google Place."""
@@ -69,7 +69,7 @@ class LocalVisibility(BaseModel):
     maps_visible_top3: Optional[bool] = None
     top3_competitors: List[Competitor] = Field(default_factory=list)
     local_pack_available: bool
-
+    user_reported_position: Optional[str] = None
 
 class Reviews(BaseModel):
     """Review data."""
