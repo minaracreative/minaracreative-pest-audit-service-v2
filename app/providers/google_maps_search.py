@@ -27,7 +27,10 @@ class GoogleMapsSearchProvider:
             "api_key": self.api_key,
             "num": 3,
         }
-
+ 
+        logger.info("Using SerpAPI key: %s...", self.api_key[:10] if self.api_key else "MISSING")
+        logger.info("SerpAPI request: url=%s query=%s", url, query)
+        
         t0 = time.time()
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
