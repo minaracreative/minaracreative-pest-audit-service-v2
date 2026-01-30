@@ -185,6 +185,7 @@ class AuditRunner:
                 "website_url": website_str,
                 "city": city,
                 "primary_service": primary_service,
+                "local_pack_position": local_pack_position,
             },
             "resolved_business": {
                 "place_id": resolved.get("place_id"),
@@ -236,6 +237,7 @@ class AuditRunner:
                 "website_url": website_url,
                 "city": city,
                 "primary_service": primary_service,
+                "local_pack_position": "",
             },
             "resolved_business": {
                 "place_id": None,
