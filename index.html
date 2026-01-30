@@ -506,8 +506,6 @@
 						document.getElementById(nameId).textContent = competitor.name || '—';
 						document.getElementById(reviewsId).textContent = competitor.review_count || '—';
 						document.getElementById(ratingId).textContent = competitor.rating ? competitor.rating.toFixed(1) + '★' : '—';
-
-						logger.info(`Competitor ${i + 1}: ${competitor.name}`);
 					}
 				} else {
 					document.getElementById('comparisonSection').style.display = 'none';
