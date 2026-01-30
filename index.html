@@ -421,47 +421,53 @@
     <script>
         const API_URL = 'https://minaracreative-pest-audit-service-v2.onrender.com/audit';
 
-        document.getElementById('auditForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+		document.getElementById('auditForm').addEventListener('submit', async (e) => {
+			e.preventDefault();
 
-            const businessName = document.getElementById('businessName').value;
-            const website = document.getElementById('website').value;
-            const city = document.getElementById('city').value;
-            const service = document.getElementById('service').value;
+			// Force clear all cached results
+			localStorage.clear();
+			sessionStorage.clear();
 
-            const errorDiv = document.getElementById('error');
-            errorDiv.classList.remove('show');
+			const businessName = document.getElementById('businessName').value;
+			const website = document.getElementById('website').value;
+			const city = document.getElementById('city').value;
+			const service = document.getElementById('service').value;
+			const position = document.getElementById('localPackPosition').value;
 
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('results').classList.remove('show');
+			const errorDiv = document.getElementById('error');
+			errorDiv.classList.remove('show');
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+			document.getElementById('loading').style.display = 'block';
+			document.getElementById('results').classList.remove('show');
+
+			try {
+				// Add timestamp to force fresh request (bypass cache)
+				const response = await fetch(API_URL + '?t=' + Date.now(), {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
 					body: JSON.stringify({
 						business_name: businessName,
 						website_url: website,
 						city: city,
 						primary_service: service,
-						local_pack_position: document.getElementById('localPackPosition').value  // ADD THIS
+						local_pack_position: position
 					})
-                });
+				});
 
-                if (!response.ok) {
-                    throw new Error('Failed to generate audit');
-                }
+				if (!response.ok) {
+					throw new Error('Failed to generate audit');
+				}
 
-                const data = await response.json();
+				const data = await response.json();
 
-                // Conclusion
-                document.getElementById('conclusionTitle').textContent = data.selected_conclusion.conclusion;
-                document.getElementById('conclusionReason').textContent = 'Reason: ' + data.selected_conclusion.reason;
+				// Conclusion
+				document.getElementById('conclusionTitle').textContent = data.selected_conclusion.conclusion;
+				document.getElementById('conclusionReason').textContent = 'Reason: ' + data.selected_conclusion.reason;
 
-                // Opportunity
-                document.getElementById('opportunity').textContent = data.missed_opportunity.opportunity_description;
+				// Opportunity
+				document.getElementById('opportunity').textContent = data.missed_opportunity.opportunity_description;
 
 				// Your Business Info
 				document.getElementById('yourName').textContent = data.resolved_business.name;
@@ -474,11 +480,18 @@
 				const visibilityClass = ["1", "2", "3"].includes(userPosition) ? 'visibility-yes' : 'visibility-no';
 				document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator ${visibilityClass}">${visibilityText}</span>`;
 
-				// Show all competitors from top 3
+				// Show all competitors from top 3 (ALWAYS show if competitors exist)
 				const competitors = data.local_visibility.top3_competitors;
+
+				// Hide all competitor cards first
+				document.getElementById('competitor1Card').style.display = 'none';
+				document.getElementById('competitor2Card').style.display = 'none';
+				document.getElementById('competitor3Card').style.display = 'none';
+
 				if (competitors && competitors.length > 0) {
 					document.getElementById('comparisonSection').style.display = 'block';
 
+					// Loop through competitors and display them
 					for (let i = 0; i < Math.min(3, competitors.length); i++) {
 						const competitor = competitors[i];
 						const cardId = `competitor${i + 1}Card`;
@@ -486,38 +499,32 @@
 						const reviewsId = `competitor${i + 1}Reviews`;
 						const ratingId = `competitor${i + 1}Rating`;
 
+						// Show the card
 						document.getElementById(cardId).style.display = 'block';
+
+						// Populate the card
 						document.getElementById(nameId).textContent = competitor.name || '—';
 						document.getElementById(reviewsId).textContent = competitor.review_count || '—';
 						document.getElementById(ratingId).textContent = competitor.rating ? competitor.rating.toFixed(1) + '★' : '—';
+
+						logger.info(`Competitor ${i + 1}: ${competitor.name}`);
 					}
 				} else {
 					document.getElementById('comparisonSection').style.display = 'none';
 				}
 
-                // Call & Lead Capture
-                document.getElementById('phoneFound').textContent = data.call_capture.phone_found ? '✓ Yes' : '✗ No';
-                document.getElementById('phoneConsistency').textContent = data.call_capture.phone_consistency.charAt(0).toUpperCase() + data.call_capture.phone_consistency.slice(1);
-                document.getElementById('callTracking').textContent = data.call_capture.call_tracking_detected === 'true' ? '✓ Yes' : (data.call_capture.call_tracking_detected === 'false' ? '✗ No' : '? Unknown');
-                document.getElementById('afterHours').textContent = data.call_capture.scheduling_widget_detected || data.call_capture.form_detected ? '✓ Has Backup' : '✗ Phone Only';
-                document.getElementById('captureRisk').textContent = data.after_hours_risk.risk_level.charAt(0).toUpperCase() + data.after_hours_risk.risk_level.slice(1);
+				document.getElementById('results').classList.add('show');
 
-                // Google & Reviews
-                document.getElementById('reviews').textContent = data.reviews.total_reviews || '—';
-                document.getElementById('rating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + '★' : '—';
+				// Clear the form
+				document.getElementById('auditForm').reset();
 
-                const lastReviewDate = data.reviews.last_review_date ? new Date(data.reviews.last_review_date).toLocaleDateString() : '—';
-                document.getElementById('lastReview').textContent = lastReviewDate;
-
-                document.getElementById('results').classList.add('show');
-
-            } catch (error) {
-                errorDiv.textContent = 'Error: ' + error.message + '. Make sure the website URL is correct.';
-                errorDiv.classList.add('show');
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
-        });
+			} catch (error) {
+				errorDiv.textContent = 'Error: ' + error.message;
+				errorDiv.classList.add('show');
+			} finally {
+				document.getElementById('loading').style.display = 'none';
+			}
+		});
     </script>
 </body>
 </html>
