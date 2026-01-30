@@ -141,11 +141,11 @@
             text-transform: uppercase;
             margin-bottom: 15px;
         }
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+		.comparison-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+			gap: 15px;
+		}
         .comparison-card {
             background: white;
             padding: 15px;
@@ -305,42 +305,76 @@
                 <div id="opportunity" style="font-size: 14px;"></div>
             </div>
 
-            <div id="comparisonSection" class="comparison" style="display: none;">
-                <h3>Competitive Position</h3>
-                <div class="comparison-grid">
-                    <div class="comparison-card your-business">
-                        <div class="comparison-card-title" id="yourName">Your Business</div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Reviews</span>
-                            <span class="comparison-metric-value" id="yourReviews">—</span>
-                        </div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Rating</span>
-                            <span class="comparison-metric-value" id="yourRating">—</span>
-                        </div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Local Visibility</span>
-                            <span class="comparison-metric-value" id="yourVisibility">—</span>
-                        </div>
-                    </div>
+			<div id="comparisonSection" class="comparison" style="display: none;">
+				<h3>Competitive Position</h3>
+				<div class="comparison-grid" id="comparisonGrid">
+					<!-- Your business card -->
+					<div class="comparison-card your-business">
+						<div class="comparison-card-title" id="yourName">Your Business</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Reviews</span>
+							<span class="comparison-metric-value" id="yourReviews">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Rating</span>
+							<span class="comparison-metric-value" id="yourRating">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Local Visibility</span>
+							<span class="comparison-metric-value" id="yourVisibility">—</span>
+						</div>
+					</div>
 
-                    <div class="comparison-card competitor" id="competitorCard" style="display: none;">
-                        <div class="comparison-card-title" id="competitorName">Top Competitor</div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Reviews</span>
-                            <span class="comparison-metric-value" id="competitorReviews">—</span>
-                        </div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Rating</span>
-                            <span class="comparison-metric-value" id="competitorRating">—</span>
-                        </div>
-                        <div class="comparison-metric">
-                            <span class="comparison-metric-label">Position</span>
-                            <span class="comparison-metric-value">#1 Local</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+					<!-- Top 3 competitor cards -->
+					<div class="comparison-card competitor" id="competitor1Card" style="display: none;">
+						<div class="comparison-card-title">#1 Competitor</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Name</span>
+							<span class="comparison-metric-value" id="competitor1Name">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Reviews</span>
+							<span class="comparison-metric-value" id="competitor1Reviews">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Rating</span>
+							<span class="comparison-metric-value" id="competitor1Rating">—</span>
+						</div>
+					</div>
+
+					<div class="comparison-card competitor" id="competitor2Card" style="display: none;">
+						<div class="comparison-card-title">#2 Competitor</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Name</span>
+							<span class="comparison-metric-value" id="competitor2Name">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Reviews</span>
+							<span class="comparison-metric-value" id="competitor2Reviews">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Rating</span>
+							<span class="comparison-metric-value" id="competitor2Rating">—</span>
+						</div>
+					</div>
+
+					<div class="comparison-card competitor" id="competitor3Card" style="display: none;">
+						<div class="comparison-card-title">#3 Competitor</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Name</span>
+							<span class="comparison-metric-value" id="competitor3Name">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Reviews</span>
+							<span class="comparison-metric-value" id="competitor3Reviews">—</span>
+						</div>
+						<div class="comparison-metric">
+							<span class="comparison-metric-label">Rating</span>
+							<span class="comparison-metric-value" id="competitor3Rating">—</span>
+						</div>
+					</div>
+				</div>
+			</div>
 
             <div class="result-section">
                 <h3>Call & Lead Capture</h3>
@@ -429,31 +463,34 @@
                 // Opportunity
                 document.getElementById('opportunity').textContent = data.missed_opportunity.opportunity_description;
 
-                // Your Business Info
-                document.getElementById('yourName').textContent = data.resolved_business.name;
-                document.getElementById('yourReviews').textContent = data.reviews.total_reviews || '—';
-                document.getElementById('yourRating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + '★' : '—';
+				// Your Business Info
+				document.getElementById('yourName').textContent = data.resolved_business.name;
+				document.getElementById('yourReviews').textContent = data.reviews.total_reviews || '—';
+				document.getElementById('yourRating').textContent = data.reviews.rating ? data.reviews.rating.toFixed(1) + '★' : '—';
 
-                const visibilityText = data.local_visibility.maps_visible_top3 === true ? '✓ In Top 3' : '✗ Not Top 3';
-                const visibilityClass = data.local_visibility.maps_visible_top3 === true ? 'visibility-yes' : 'visibility-no';
-                document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator ${visibilityClass}">${visibilityText}</span>`;
-
-				// Competitor Comparison
-				const competitors = data.local_visibility.top3_competitors;
 				const userPosition = data.inputs.local_pack_position;
+				const positionMap = { "1": "#1", "2": "#2", "3": "#3", "not_visible": "Not Listed" };
+				const visibilityText = positionMap[userPosition] || 'Unknown';
+				const visibilityClass = ["1", "2", "3"].includes(userPosition) ? 'visibility-yes' : 'visibility-no';
+				document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator ${visibilityClass}">${visibilityText}</span>`;
 
-				// Show competitor comparison if user is in top 3
-				if (competitors && competitors.length > 0 && ["1", "2", "3"].includes(userPosition)) {
-					const topCompetitor = competitors[0];
-					document.getElementById('competitorCard').style.display = 'block';
+				// Show all competitors from top 3
+				const competitors = data.local_visibility.top3_competitors;
+				if (competitors && competitors.length > 0) {
 					document.getElementById('comparisonSection').style.display = 'block';
-					document.getElementById('competitorName').textContent = topCompetitor.name || 'Top Competitor';
-					document.getElementById('competitorReviews').textContent = topCompetitor.review_count || '—';
-					document.getElementById('competitorRating').textContent = topCompetitor.rating ? topCompetitor.rating.toFixed(1) + '★' : '—';
 
-					// Show your position
-					const positionMap = { "1": "#1", "2": "#2", "3": "#3" };
-					document.getElementById('yourVisibility').innerHTML = `<span class="visibility-indicator visibility-yes">${positionMap[userPosition]} Local</span>`;
+					for (let i = 0; i < Math.min(3, competitors.length); i++) {
+						const competitor = competitors[i];
+						const cardId = `competitor${i + 1}Card`;
+						const nameId = `competitor${i + 1}Name`;
+						const reviewsId = `competitor${i + 1}Reviews`;
+						const ratingId = `competitor${i + 1}Rating`;
+
+						document.getElementById(cardId).style.display = 'block';
+						document.getElementById(nameId).textContent = competitor.name || '—';
+						document.getElementById(reviewsId).textContent = competitor.review_count || '—';
+						document.getElementById(ratingId).textContent = competitor.rating ? competitor.rating.toFixed(1) + '★' : '—';
+					}
 				} else {
 					document.getElementById('comparisonSection').style.display = 'none';
 				}
