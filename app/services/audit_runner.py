@@ -13,7 +13,6 @@ from app.services.rules import (
     generate_sales_safe_summary,
     select_conclusion,
 )
-from app.providers.google_maps_search import GoogleMapsSearchProvider
 from app.utils.constants import SERVICE_READABLE
 from app.utils.logging_config import logger
 
@@ -28,7 +27,6 @@ class AuditRunner:
     def __init__(self) -> None:
         self.google_places = GooglePlacesProvider()
         self.site_scanner = SiteScanner()
-        self.google_maps_search = GoogleMapsSearchProvider()
         self.api_calls: List[Dict[str, Any]] = []
 
     def _log_api(
@@ -107,46 +105,33 @@ class AuditRunner:
             "review_data_status": "available" if resolved.get("total_reviews") is not None else "insufficient_api_data",
         }
 
-        # Step 3: Local Pack Visibility via Google Places Nearby Search
-        # Get coordinates from Place Details result (not from Text Search)
-        location = None
-        if details_result.get("status") == "success" and details_result.get("result"):
-            d = details_result["result"]
-            location = d.get("location")  # This should come from Place Details
-        
-        service_readable = SERVICE_READABLE.get(primary_service, primary_service)
-        
-        local_pack_result = await self.google_maps_search.local_pack_search(
-            service=service_readable,
-            city=city,
+        # Step 3: Local Pack Visibility (from user input)
+        local_pack_position = local_pack_position  # From input
+        maps_visible_top3 = local_pack_position in ["1", "2", "3"]
+
+        logger.info("User reported local pack position: %s", local_pack_position)
+
+        # Get nearby competitors for comparison (regardless of user's position)
+        local_pack_result = await self.google_places.nearby_search(
+            latitude=location.get("lat", 0) if location else 0,
+            longitude=location.get("lng", 0) if location else 0,
+            service_type=primary_service,
+            radius=5000,
         )
         self._log_api(
-            "serpapi",
-            "google_maps",
+            "google_places",
+            "nearby_search",
             local_pack_result.get("status_code"),
             local_pack_result.get("error"),
         )
 
-        # Check if target is in actual top 3
-        maps_visible_top3 = False
-        top3_competitors = local_pack_result.get("results", [])
+        # Extract competitors from nearby search
+        top3_competitors = local_pack_result.get("top3_competitors", [])
+        logger.info("Nearby search returned %s competitors for comparison", len(top3_competitors))
 
-        if top3_competitors and len(top3_competitors) > 0:
-            top3_names = [c.get("name", "").lower() for c in top3_competitors]
-            target_name = resolved.get("name", "").lower()
-
-            logger.info("Matching target=%s against actual Maps top3=%s", target_name, top3_names)
-
-            from rapidfuzz import fuzz
-            for i, top_name in enumerate(top3_names):
-                ratio = fuzz.token_set_ratio(target_name, top_name)
-                logger.info("Position %s: '%s' vs '%s' = %s", i + 1, target_name, top_name, ratio)
-                if ratio >= 80:
-                    maps_visible_top3 = True
-                    logger.info("Found in Maps Local Pack at position %s", i + 1)
-                    break
-
+        # Store user's reported position and visibility status
         local_pack_result["maps_visible_top3"] = maps_visible_top3
+        local_pack_result["user_reported_position"] = local_pack_position
 
         # Step 4: Call Capture Assessment (homepage, /contact, /services)
         parsed = urlparse(website_str)

@@ -8,12 +8,11 @@ from app.utils.constants import ALLOWED_SERVICES
 
 
 class AuditRequest(BaseModel):
-    """Request schema for POST /audit."""
-
     business_name: str = Field(..., min_length=2, max_length=50)
-    website_url: HttpUrl
+    website_url: str
     city: str = Field(..., min_length=2, max_length=50)
-    primary_service: str = Field(...)
+    primary_service: str
+    local_pack_position: str = Field(..., regex="^(1|2|3|not_visible|unknown)$")
 
     @field_validator("city")
     @classmethod
