@@ -428,7 +428,6 @@
 				// Competitor Comparison
 				const competitors = data.local_visibility.top3_competitors;
 				if (competitors && competitors.length > 1) {
-					// Show second competitor (index 1), not first
 					const topCompetitor = competitors[1];
 					document.getElementById('competitorCard').style.display = 'block';
 					document.getElementById('comparisonSection').style.display = 'block';
@@ -438,7 +437,7 @@
 				} else {
 					document.getElementById('comparisonSection').style.display = 'none';
 				}
-
+				
                 // Call & Lead Capture
                 document.getElementById('phoneFound').textContent = data.call_capture.phone_found ? '✓ Yes' : '✗ No';
                 document.getElementById('phoneConsistency').textContent = data.call_capture.phone_consistency.charAt(0).toUpperCase() + data.call_capture.phone_consistency.slice(1);
