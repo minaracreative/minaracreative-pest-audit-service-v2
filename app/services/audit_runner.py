@@ -74,7 +74,7 @@ class AuditRunner:
         if place_result.get("status") != "success" or not place_result.get("result"):
             return self._build_error_response(
                 audit_id, timestamp, business_name, website_str, city, primary_service,
-                "business_not_found", int((time.time() - start_time) * 1000),
+                local_pack_position, "business_not_found", int((time.time() - start_time) * 1000),
             )
 
         resolved = place_result["result"]
@@ -153,7 +153,7 @@ class AuditRunner:
         audit_data_for_conclusion = {
             'local_visibility': {
                 'maps_visible_top3': local_pack_result.get('maps_visible_top3'),
-                'top3_competitors': local_pack_result.get('results', [])  # Changed from top3_competitors
+                'top3_competitors': local_pack_result.get('top3_competitors', [])  # Changed from top3_competitors
             },
             'after_hours_risk': after_hours,
             'reviews': reviews_data
@@ -166,13 +166,13 @@ class AuditRunner:
             primary_service,
             city,
             reviews_data["total_reviews"],
-            local_pack_result.get("results") or [],  # Changed from top3_competitors
+            local_pack_result.get("top3_competitors") or [],  # Changed from top3_competitors
             conclusion_data["reason"],
         )
         sales_summary = generate_sales_safe_summary(
             conclusion_data["conclusion"],
             resolved,
-            {"top3_competitors": local_pack_result.get("results") or []},  # Changed from top3_competitors
+            {"top3_competitors": local_pack_result.get("top3_competitors") or []},  # Changed from top3_competitors
             after_hours,
         )
 
@@ -200,7 +200,7 @@ class AuditRunner:
             },
             "local_visibility": {
                 "maps_visible_top3": local_pack_result.get("maps_visible_top3"),
-                "top3_competitors": local_pack_result.get("results", []),  # Changed from top3_competitors
+                "top3_competitors": local_pack_result.get("top3_competitors", []),  # Changed from top3_competitors
                 "local_pack_available": local_pack_result.get("local_pack_available", False),
             },
             "reviews": reviews_data,
@@ -226,6 +226,7 @@ class AuditRunner:
         website_url: str,
         city: str,
         primary_service: str,
+        local_pack_position: str,
         error_reason: str,
         duration_ms: int,
     ) -> Dict[str, Any]:

@@ -1,7 +1,7 @@
 """Deterministic rule-based logic: after-hours risk, conclusion selection, missed opportunity."""
 from typing import Any, Dict, List, Optional
 from app.utils.logging_config import logger
-from app.utils.constants import CONCLUSION_TEMPLATES, SERVICE_READABLE
+from app.utils.constants import SERVICE_READABLE
 
 
 def assess_after_hours_risk(
@@ -32,23 +32,14 @@ def select_conclusion(audit_data):
     after_hours_risk = audit_data.get('after_hours_risk', {}).get('risk_level')
     total_reviews = audit_data.get('reviews', {}).get('total_reviews')
     top3_competitors = audit_data.get('local_visibility', {}).get('top3_competitors', [])
-    user_position = audit_data.get('local_visibility', {}).get('user_reported_position')
 
-    logger.info("Conclusion logic: position=%s visible=%s after_hours=%s reviews=%s", 
-                user_position, maps_visible_top3, after_hours_risk, total_reviews)
+    logger.info("Conclusion logic: visible=%s after_hours=%s reviews=%s competitors=%s", 
+                maps_visible_top3, after_hours_risk, total_reviews, len(top3_competitors))
 
-    # Rule 1: User says they're not in top 3
-    if user_position == "not_visible":
-        return {
-            "conclusion": "Invisible for high-value service",
-            "reason": "not_in_top3_local_pack"
-        }
-
-    # Rule 2: User says they're in top 3
-    if user_position in ["1", "2", "3"]:
-        # Rule 2a: Check if outpaced by competitors
+    # If in top 3, check for issues
+    if maps_visible_top3 == True:
+        # Check if outpaced by competitors
         if top3_competitors and len(top3_competitors) > 0:
-            # Get the first competitor from Nearby Search
             top_competitor = top3_competitors[0]
             competitor_reviews = top_competitor.get('review_count', 0)
 
@@ -58,32 +49,34 @@ def select_conclusion(audit_data):
                     "reason": "significant_review_gap"
                 }
 
-        # Rule 2b: Check if losing calls
+        # Check if losing calls
         if after_hours_risk == "high":
             return {
                 "conclusion": "Losing calls due to capture gaps",
                 "reason": "no_after_hours_capture"
             }
 
-        # Rule 2c: Visible in top 3, no major issues
+        # Visible in top 3, no major issues
         return {
-            "conclusion": "Not discoverable to high-intent buyers",
-            "reason": "visible_but_needs_optimization"
+            "conclusion": "You're visible and well-positioned locally",
+            "reason": "top_3_position_with_strong_capture"
         }
 
-    # Rule 3: User unsure about position
-    if user_position == "unknown":
+    # NOT in top 3
+    if maps_visible_top3 == False:
+        # Still check for call capture issues
         if after_hours_risk == "high":
             return {
                 "conclusion": "Losing calls due to capture gaps",
                 "reason": "no_after_hours_capture"
             }
+
         return {
-            "conclusion": "Not discoverable to high-intent buyers",
-            "reason": "position_unknown"
+            "conclusion": "Invisible for high-value service",
+            "reason": "not_in_top3_local_pack"
         }
 
-    # Default
+    # Default (unknown position)
     return {
         "conclusion": "Not discoverable to high-intent buyers",
         "reason": "default"
@@ -97,46 +90,33 @@ def generate_missed_opportunity(
     top3_competitors: List[Dict[str, Any]],
     selected_reason: str,
 ) -> Dict[str, str]:
-    """
-    One template per conclusion. Placeholders per spec:
-    - Invisible: {service}, {city}
-    - Outpaced: {competitor}, {comp_reviews}, {total_reviews}
-    - Others: literal.
-    """
+    """One template per conclusion."""
     service_readable = SERVICE_READABLE.get(primary_service, primary_service.replace("_", " "))
+
+    templates = {
+        "Invisible for high-value service": f"You're not showing up for {service_readable} in {city}. Competitors in the local pack are getting calls you're missing.",
+        "Losing calls due to capture gaps": "You only have a phone number for lead capture. Without a contact form or scheduling link, you're losing calls after hours.",
+        "Outpaced by competitors in review activity": f"Top competitor has {top3_competitors[0].get('review_count', 0) if top3_competitors else 0} reviews vs. your {total_reviews or 0}. Review gap signals lower visibility in local search.",
+        "Not discoverable to high-intent buyers": "Your local search presence isn't strong enough to appear where buyers are looking. This limits booked jobs.",
+        "You're visible and well-positioned locally": f"You're visible and ranked well for {service_readable} in {city}. Focus on maintaining review momentum and consistent customer engagement.",
+    }
+
     codes = {
         "Invisible for high-value service": "invisible_high_value",
         "Losing calls due to capture gaps": "capture_gaps",
         "Outpaced by competitors in review activity": "review_gap",
         "Not discoverable to high-intent buyers": "not_discoverable",
+        "You're visible and well-positioned locally": "well_positioned",
     }
+
     opportunity_code = codes.get(conclusion, "not_discoverable")
-    template = CONCLUSION_TEMPLATES.get(
-        conclusion,
-        CONCLUSION_TEMPLATES["Not discoverable to high-intent buyers"],
-    )
-    if conclusion == "Invisible for high-value service":
-        opportunity_description = template.format(service=service_readable, city=city)
-    elif conclusion == "Outpaced by competitors in review activity":
-        if top3_competitors:
-            comp_name = top3_competitors[0].get("name") or "Competitor"
-            comp_reviews = top3_competitors[0].get("review_count") or 0
-        else:
-            comp_name = "Competitor"
-            comp_reviews = 0
-        opportunity_description = template.format(
-            competitor=comp_name,
-            comp_reviews=comp_reviews,
-            total_reviews=total_reviews or 0,
-        )
-    else:
-        opportunity_description = template
+    opportunity_description = templates.get(conclusion, templates["Not discoverable to high-intent buyers"])
+
     return {
         "opportunity_code": opportunity_code,
         "opportunity_description": opportunity_description,
         "reason": selected_reason,
     }
-
 
 def generate_sales_safe_summary(
     conclusion: str,
