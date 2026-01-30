@@ -50,6 +50,7 @@ class AuditRunner:
         website_url: Any,
         city: str,
         primary_service: str,
+        local_pack_position: str,
     ) -> Dict[str, Any]:
         """Run full audit. website_url can be HttpUrl; we pass str(website_url) to stdlib/providers."""
         self.api_calls = []
