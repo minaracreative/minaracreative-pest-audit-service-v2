@@ -1,12 +1,11 @@
 """FastAPI app: POST /audit, GET /health, GET /version."""
 from datetime import datetime, timezone
 from urllib.parse import urlparse
+import os
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
+from fastapi.responses import JSONResponse, FileResponse
+
 
 from app.config import settings
 from app.schemas import (
